@@ -1,332 +1,327 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mobile Matching: Disease ↔ Key Symptoms</title>
-<style>
-  :root {
-    --bg: #0e0f13;
-    --panel: #171923;
-    --card: #1f2333;
-    --accent: #6ee7ff;
-    --accent2: #7cf59a;
-    --text: #e6e8ef;
-    --muted: #9aa0b5;
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    color: var(--text);
-    background: linear-gradient(120deg, #0e0f13 0%, #121525 100%);
-  }
-  header {
-    position: sticky; top: 0; z-index: 20;
-    background: rgba(23,25,35,.92);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid #24283b;
-    padding: 12px 14px;
-  }
-  h1 { margin: 0; font-size: 18px; }
-  .hud { margin-top: 6px; font-size: 13px; color: var(--muted); display:flex; flex-wrap:wrap; gap:8px; }
-  .hud .stat { font-variant-numeric: tabular-nums; }
-  .wrap { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 12px; }
-  .board { display: grid; grid-template-columns: 1fr; gap: 12px; }
-  .column {
-    background: var(--panel);
-    border: 1px solid #24283b;
-    border-radius: 12px;
-    padding: 10px;
-  }
-  .col-title {
-    margin: 0 0 6px;
-    padding: 8px 10px;
-    font-size: 14px;
-    border-radius: 8px;
-    display: flex; justify-content: space-between; align-items: center;
-    background: linear-gradient(180deg, #1a1d2b, #171923);
-    border: 1px solid #24283b;
-  }
-  .cards { display: grid; gap: 8px; }
-  button.card {
-    text-align: left;
-    border: 1px solid #29314a;
-    background: var(--card);
-    color: var(--text);
-    border-radius: 12px;
-    padding: 14px 14px;
-    font-size: 16px;           /* larger tap target */
-    line-height: 1.3;
-    min-height: 48px;          /* mobile finger target */
-    cursor: pointer;
-    transition: transform 80ms ease, border-color 120ms ease, box-shadow 120ms ease;
-    box-shadow: 0 2px 0 rgba(0,0,0,0.25);
-    white-space: pre-wrap;     /* preserve Excel paragraph breaks */
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-  button.card:hover { transform: translateY(-1px); border-color: #3b4568; }
-  button.card.selected { outline: 2px solid var(--accent); box-shadow: 0 0 0 2px rgba(110,231,255,0.15) inset; }
-  button.card.matched { opacity: .55; background: #1a202e; border-color: #2d374d; cursor: default; }
-  button.card.badflash { animation: bad 400ms ease; }
-  @keyframes bad {
-    0% { transform: translateX(0); }
-    20% { transform: translateX(-5px); }
-    40% { transform: translateX(5px); }
-    60% { transform: translateX(-3px); }
-    80% { transform: translateX(3px); }
-    100% { transform: translateX(0); }
-  }
-  .toolbar {
-    position: sticky; bottom: 0; z-index: 15;
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: rgba(23,25,35,.95);
-    border-top: 1px solid #24283b;
-    backdrop-filter: blur(8px);
-  }
-  .btn {
-    padding: 12px 10px;
-    border-radius: 12px;
-    border: 1px solid #2c3450;
-    background: linear-gradient(180deg, #242a3e, #20253a);
-    color: var(--text);
-    font-weight: 600;
-    letter-spacing: .2px;
-    cursor: pointer;
-    min-height: 44px;
-  }
-  .footer { text-align:center; color: var(--muted); font-size: 12px; padding: 8px 0 14px; }
-  /* Desktop enhancements: place stats to the right */
-  @media (min-width: 900px) {
-    .wrap { grid-template-columns: 1fr 280px; }
-    .board { grid-template-columns: 1fr 1fr; }
-    .toolbar { display:none; }
-    .sidebar {
-      background: var(--panel);
-      border: 1px solid #24283b;
-      border-radius: 12px;
-      padding: 12px;
-      position: sticky; top: 72px; height: fit-content;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Disease ↔ Symptoms Matching — Set 2</title>
+  <style>
+    :root{
+      --bg: #0b0f14;
+      --card: rgba(255,255,255,0.06);
+      --muted: #9fb0c3;
+      --primary: #5bd0ff;
+      --accent: #8b5cff;
+      --good: #1fce7a;
+      --bad: #ff4d4d;
+      --outline: rgba(255,255,255,0.14);
+      --text: #ffffff;
     }
-  }
-</style>
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1000px 700px at 15% 10%, rgba(139,92,255,.25), transparent 60%),
+                  radial-gradient(900px 600px at 85% 90%, rgba(91,208,255,.18), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .app{ width:min(1100px, 100%); }
+    header{ display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .title{
+      font-weight:700; letter-spacing:.3px; font-size: clamp(22px, 3vw, 30px);
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .toolbar{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .pill{
+      border:1px solid var(--outline);
+      padding:8px 12px; border-radius:999px; color:var(--muted); font-size:14px;
+      display:flex; gap:10px; align-items:center; backdrop-filter:saturate(140%) blur(6px);
+      background:var(--card);
+    }
+    button{
+      border:none; border-radius:12px; padding:10px 14px; font-weight:600; color:#0b0f14;
+      background:linear-gradient(90deg, var(--primary), var(--accent));
+      cursor:pointer; transition: transform .06s ease, box-shadow .2s ease; box-shadow:0 6px 24px rgba(0,0,0,.25);
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+    .board{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+    .col{
+      border:1px solid var(--outline);
+      background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+      border-radius:20px; padding:14px; backdrop-filter: blur(6px) saturate(140%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02), 0 12px 40px rgba(0,0,0,0.2);
+      min-height: 70vh;
+      display:flex; flex-direction:column;
+    }
+    .col h2{
+      margin:6px 8px 10px; font-size:15px; font-weight:700; color:var(--muted); letter-spacing:.2px;
+      text-transform:uppercase;
+    }
+    .list{ display:grid; gap:10px; align-content:start; }
+    .card{
+      border:1px solid var(--outline);
+      background:var(--card);
+      color:#ffffff;
+      padding:12px 14px; border-radius:14px;
+      transition: border-color .2s ease, box-shadow .2s ease, transform .06s ease;
+      cursor:pointer; position:relative; text-align:left;
+    }
+    .card:hover{ box-shadow:0 8px 24px rgba(0,0,0,.25); }
+    .card:active{ transform: translateY(1px) scale(.995); }
+    .card.disabled{ opacity:.5; pointer-events:none; }
+    .card.selected{ outline:2px solid var(--accent); border-color:rgba(139,92,255,.8); box-shadow:0 10px 28px rgba(139,92,255,.25); }
+    .card.correct{ background: linear-gradient(180deg, rgba(31,206,122,.15), rgba(31,206,122,.08)); border-color: rgba(31,206,122,.7); }
+    .card.correct::after{
+      content:"✓";
+      position:absolute; right:10px; top:8px; font-weight:900; color:var(--good);
+    }
+    .card.wrong{ outline:2px solid var(--bad); border-color: rgba(255,77,77,.9); }
+    .small{ font-size:12px; color:var(--muted); margin-left:6px; }
+    .footer{ display:flex; justify-content:center; margin-top:14px; color:var(--muted); font-size:14px; }
+    .toast{
+      position:fixed; top:14px; left:50%; transform:translateX(-50%);
+      background:rgba(17,25,40,.85); border:1px solid var(--outline); padding:10px 14px; border-radius:12px;
+      color:var(--text); font-weight:600; display:none;
+    }
+    @media (max-width: 900px){
+      .board{ grid-template-columns: 1fr; }
+      .col{ min-height:auto; }
+    }
+  </style>
 </head>
 <body>
-<header>
-  <h1>Match Disease ↔ Key Symptoms</h1>
-  <div class="hud">
-    <span>Time <span id="timer" class="stat">00:00</span></span>
-    <span>Best <span id="best" class="stat">—</span></span>
-    <span>Score <span class="stat"><span id="score">0</span>/<span id="total">0</span></span></span>
-    <span>Tries <span id="tries" class="stat">0</span></span>
-    <span>Acc <span id="acc" class="stat">0%</span></span>
-  </div>
-</header>
+  <div class="app">
+    <header>
+      <div class="title">Disease ↔ Symptoms Matching — Set 2</div>
+      <div class="toolbar">
+        <div class="pill" id="scorePill">Score: <span id="score">0</span> / <span id="total">0</span></div>
+        <div class="pill">Attempts: <span id="attempts">0</span></div>
+        <button id="resetBtn" aria-label="Reset game">Reset</button>
+      </div>
+    </header>
 
-<div class="wrap">
-  <div class="board" id="board">
-    <section class="column">
-      <h2 class="col-title">Disease <span id="leftLeft"></span></h2>
-      <div id="left" class="cards"></div>
+    <section class="board" role="application" aria-label="Matching board">
+      <div class="col" aria-label="Diseases column">
+        <h2>Diseases <span class="small">(click one)</span></h2>
+        <div class="list" id="diseaseList"></div>
+      </div>
+      <div class="col" aria-label="Symptoms column">
+        <h2>Symptoms / Clinical Findings <span class="small">(click one)</span></h2>
+        <div class="list" id="symptomList"></div>
+      </div>
     </section>
-    <section class="column">
-      <h2 class="col-title">Key Symptoms <span id="rightLeft"></span></h2>
-      <div id="right" class="cards"></div>
-    </section>
+
+    <div class="footer" id="status"></div>
   </div>
+  <div class="toast" id="toast">Great job</div>
 
-  <aside class="sidebar" id="desktopStats" style="display:none">
-    <div><strong>Time</strong> <span id="timer2" class="stat">00:00</span></div>
-    <div><strong>Best</strong> <span id="best2" class="stat">—</span></div>
-    <div><strong>Matches</strong> <span class="stat"><span id="score2">0</span>/<span id="total2">0</span></span></div>
-    <div><strong>Attempts</strong> <span id="tries2" class="stat">0</span></div>
-    <div><strong>Accuracy</strong> <span id="acc2" class="stat">0%</span></div>
-    <div style="height:8px;border-radius:999px;background:#23283a;overflow:hidden;margin-top:6px;">
-      <span id="accbar2" style="display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));"></span>
-    </div>
-    <div style="margin-top:10px;display:grid;gap:8px;">
-      <button id="start" class="btn">Start / Restart</button>
-      <button id="shuffle" class="btn">Shuffle</button>
-      <button id="reveal" class="btn">Reveal pairs</button>
-    </div>
-  </aside>
-</div>
+  <script>
+    const PAIRS = [
+      ["Hartnup Disease","Photodermatitis, Ataxia, Diarrhea. Shares the 3 \"D\"s (Dementia, Dermatitis, Diarrhea) with pellagra. Indiconuria (bluish colored urine). Low plasma/high urine levels of neutral amino acids, especially tryptophan."],
+      ["Cystinuria","Main clinical finding is cystine stones forming in the kidneys. Small stones can pass down the ureter and are painful. Urine has higher cystine levels. Serum cystine levels are typically low."],
+      ["Phenylketonuria (PKU)","Leads to permanent neurological damage if not detected and treated early. Problems caused by elevated phenylpyruvic acid buildup hurting brain development."],
+      ["Tyrosinemia Type 1","Acute infantile form: Liver failure, renal tubulopathy, sepsis, hypoglycemia. Chronic form: Hepatomegaly, cirrhosis, renal tubulopathy, growth deficits. Most severe form."],
+      ["Tyrosinemia Type 2","Painful corneal lesions with lacrimation, scars, photophobia. Mild cognitive deficits."],
+      ["Maple Syrup Urine Disease (MSUD)","Infants lack sucking reflex. Seizures. Coma and death if not treated. Maple smelling urine (late stage symptom). Elevated levels of branched chain amino acids (Valine, Isoleucine, Leucine)."],
+      ["Homocystinuria","Lens Dislocation (82% by 10 years old). Osteoporosis (64% by 15 years old). Cognitive deficits. Vascular events. Usually tall and thin compared to siblings. High Methionine/low Cystine levels."],
+      ["Isovaleric Acidemia","Vomiting, diarrhea, poor feeding. Lethargy, hypotonia, seizures. Sweaty feet odor of urine. Elevated levels of isovaleric acid, hydroxyisovalerate, or isovalerylglycine."],
+      ["Propionic Acidemia","Early severe illness, vomiting with metabolic acidosis. Hypoglycemia. Ketonuria. Elevated serum ammonia (hyperammonemia). Elevated propionic acid."],
+      ["Methylmalonic Acidemia","Early severe illness, vomiting with metabolic acidosis. Hypoglycemia. Ketonuria. Elevated serum ammonia (hyperammonemia). Elevated methylmalonic acid."],
+      ["Classical Ehlers-Danlos Syndrome","Hypermobility (unusually large range of joint movement). Loose joints prone to dislocation and chronic pain. Elastic (stretchy) and fragile skin. Weakened connective tissue."],
+      ["Vascular Ehlers-Danlos Syndrome","Bleeding issues caused by tearing of blood vessels. Thin, translucent, very fragile skin. Weakened connective tissue."],
+      ["Osteogenesis Imperfecta","Brittle bones. Loose joints, blue grey tints the sclera. Discolored teeth prone to decay, possible hearing loss. Symptoms range from mild to severe (including death after birth)."],
+      ["Recessive Dystrophic Epidermolysis Bullosa","(No symptoms/findings provided in the sources)."],
+      ["Scurvy","Bruising and anemia. Fatigue. Peri follicular hemorrhages. Periodontal disease, poor wound healing. Muscle and/or bone pain. Corkscrew hair. Edema."],
+      ["Achondroplasia","Short stature. Average sized trunk, but short limbs. Enlarged head (macrocephaly) and prominent forehead. Bowed legs, front-to-back curvature of spine (kyphosis)."],
+      ["Hypochondroplasia","Similar features to achondroplasia. Less severe; patients are taller."],
+      ["Muenke Syndrome","(No symptoms/findings provided in the sources)."],
+      ["Leigh Syndrome","Ataxia. Loss of milestones (developmental regression). Often fatal. Characteristic symmetrical brain lesions. Hypotonia, psychomotor delay, ophthalmoplegia."],
+      ["MELAS (Mitochondrial Encephalomyopathy, Lactic Acidosis, and Stroke-like Episodes)","Mitochondrial Encephalomyopathy, Lactic Acidosis, and Stroke-like Episodes. Lactic acidosis. Can have Ragged Red Fibers on muscle biopsy."],
+      ["MERRF (Myoclonus Epilepsy with Ragged Red Fibers)","Myoclonus Epilepsy, Ragged Red Fibers. Myoclonus (brief sudden muscle jerks). Epileptic seizures, ataxia. Ragged red fibers (clumps of diseased mitochondria in muscle)."],
+      ["Kearns-Sayre Syndrome","Ptosis (droopy eyelids). Chronic progressive external ophthalmoplegia (CPEO) (inability to move eyes)."],
+      ["Essential Fructosuria","Benign course; generally causes no problems. Elevated fructose in urine."],
+      ["Hereditary Fructose Intolerance","Acute symptoms after fructose consumption: Hypoglycemia, Vomiting, Poor Feeding. Prolonged intake: Liver and kidney problems/damage. Lactic Acidosis (+/- hyperuricemia). Hepatomegaly. Presents after introduction of fructose/sucrose (usually 6-12 months)."],
+      ["Classic Galactosemia","Acute symptoms: Hypoglycemia, Vomiting, Jaundice (hyperbilirubinemia), Poor Feeding. Cataracts, Hepatomegaly. Presents shortly after milk feeding begins."],
+      ["Primary Lactase Deficiency","Pain or cramps in lower GI tract, Bloating, Excessive Gas, Loose stools, Diarrhea after consuming milk/lactose foods."],
+      ["Secondary Lactase Deficiency","Pain or cramps in lower GI tract, Bloating, Excessive Gas, Loose stools, Diarrhea after consuming milk/lactose foods. Occurs in infants/children less than 6 years old."],
+      ["Congenital Lactase Deficiency","Pain or cramps in lower GI tract, Bloating, Excessive Gas, Loose stools, Diarrhea after consuming milk/lactose foods."],
+      ["Von Gierke’s Disease (GSD Type I)","Severe hypoglycemia with lactic acidosis during fasting. Hepatomegaly (distended abdomen). Failure to thrive/short stature. Seizures. Hyperlipidemia, hyperuricemia, enlarged kidneys. Appears around 3-4 months of age."],
+      ["Pompe’s Disease (GSD Type II)","Infantile form: Fatal by 1 year. Hypotonia, hyporeflexia, enlarged tongue, Cardiomegaly (enlarged heart). Juvenile/Adult forms: Myopathy. Glycogen accumulation in lysosomes."],
+      ["Cori’s Disease (GSD Type III)","Hepatic presentation: Mild hypoglycemia (with normal lactate). Hepatomegaly, failure to thrive. Myopathic presentation: Muscle weakness/hypotonia, motor neuron disease, cardiomyopathy (may appear later in life)."],
+      ["Andersen’s Disease (GSD Type IV)","Progressive Hepatic Form: Hepatomegaly, failure to thrive. Liver failure (cirrhosis), splenomegaly. Life expectancy 4-5 years. Hypoglycemia occurs late."],
+      ["McArdle’s Disease (GSD Type V)","Exercise intolerance (painful cramps, stiffness, relieved by rest). Second wind phenomenon. Dark colored urine (positive myoglobin) after exercise."],
+      ["Hers’ Disease (GSD Type VI)","Usually a benign course. Mild hypoglycemia. Mild hyperlipidemia, hepatomegaly, failure to thrive (normalizes later)."],
+      ["I-Cell Disease / Mucolipidosis II","Craniofacial abnormalities (coarse features). Skeletal malformations (scoliosis, kyphosis). Hepatomegaly, hernia. Delays in development. Inclusion bodies (cell debris accumulation) in cells. Often fatal (age 5-8 years)."],
+      ["Tay-Sachs Disease","Apparent 3-6 months of age. Destruction of nerve cells in brain/spinal cord. Loss of motor skills, seizures, cognitive deficits. \"Cherry Red Spot\" on retina. Death by age 4 or 5."],
+      ["Gaucher Disease","Most common LSD. Bruising and anemia. Fatigue. Hepatosplenomegaly. Skeletal dysplasia, bone pain, joint swelling."],
+      ["Niemann-Pick Disease","Progressive neurological illness. Vertical supranuclear gaze palsy (inability to look up/down). Dystonia, seizures, difficulty swallowing. Hepatosplenomegaly."],
+      ["Fabry Disease","Nephropathy with proteinuria. Cardiac issues. Angiokeratoma (red, non-painful rash). Cornea verticillate (cloudy cornea). Cerebrovascular disease (stroke, TIAs) in older patients."],
+      ["Primary Carnitine Deficiency","Onset 3-30 months. Encephalopathy, coma. Hypoketotic hypoglycemia. Hepatomegaly, hyperammonemia. Low serum carnitine."],
+      ["MCAD Deficiency","Typical onset 3-24 months. Hypoketotic hypoglycemia. Vomiting, lethargy, seizures, coma. Often triggered by a common illness/fasting. Elevated Octanoyl-Carnitine. Most common defect of FA oxidation."],
+      ["LCHAD Deficiency","Fatty acid deposition into organs. Skeletal myopathy, cardiomyopathy, peripheral neuropathy, cirrhosis. Reversal of milestones, heart failure. Hypoketotic hypoglycemia."],
+      ["VLCAD Deficiency","Fatty acid deposition into organs. Skeletal myopathy, cardiomyopathy, peripheral neuropathy, cirrhosis. Reversal of milestones, heart failure. Hypoketotic hypoglycemia."],
+      ["Adrenoleukodystrophy","Ataxia. Vision and hearing problems, dementia. Issues related to low cortisol (adrenal insufficiency). Hyperpigmentation. Elevated C26 fatty acid."],
+      ["Familial Hypercholesterolemia","Heart attacks (homozygous patients often before age 30). Xanthomas (waxy cholesterol deposits in skin/tendons). Xantholasma (cholesterol deposits in eyelids). Very high total cholesterol/LDL-C."],
+      ["Abetalipoproteinemia","Failure to thrive. Acanthocytes (star-shaped red blood cells). Steatorrhea (excess fat in foul-smelling stools). Neurological problems (ataxia, retinal degeneration). Deficiency in absorbing fat soluble vitamins (E, A, D, K). Lack of ApoB-containing lipoproteins in plasma."],
+      ["Hypobetalipoproteinemia","Failure to thrive. Intestinal lipid malabsorption. Hepatic Steatosis (fat deposition in liver due to liver TG elevation). Low ApoB-containing lipoproteins in plasma."],
+      ["Diabetic Ketoacidosis","Kussmaul Breathing. Nausea, Vomiting, Abdominal pain. Fruity/acetone breath. Fatigue, weight loss, polyuria, dehydration. Lab findings: High blood glucose (>250 mg/dL), Low blood pH (<7.3), Low serum bicarb, High Anion Gap, Ketones present."]
+    ];
 
-<div class="toolbar">
-  <button id="start_m" class="btn">Start</button>
-  <button id="shuffle_m" class="btn">Shuffle</button>
-  <button id="reveal_m" class="btn">Reveal</button>
-</div>
-
-<div class="footer">Works offline. Best time and progress save in your browser.</div>
-
-<script>
-  // Data
-  const PAIRS = [{"left":"Metabolic Acidosis","right":"Rapid breathing\nconfusion\nfatigue\nnausea/vomiting"},{"left":"Metabolic Alkalosis","right":"Muscle cramps\nconfusion\nparesthesias\nhypoventilation"},{"left":"Respiratory Acidosis","right":"Hypoventilation\nheadache\nconfusion\nsomnolence"},{"left":"Respiratory Alkalosis","right":"Light‑headedness\ntingling\ntetany\nseizures"},{"left":"Hereditary Orotic Aciduria","right":"Failure to thrive\ndevelopmental delay\nmegaloblastic anemia that doesn’t respond to B12/folate"},{"left":"Lesch–Nyhan Syndrome","right":"Self‑mutilation\naggressive behavior\ngouty arthritis\nchoreoathetosis\ndevelopmental delay"},{"left":"Gout","right":"Recurrent acute monoarthritis (esp. great toe)\njoint redness and swelling"},{"left":"Adenosine Deaminase Deficiency","right":"Severe combined immunodeficiency (SCID): recurrent infections\nfailure to thrive\nchronic diarrhea"},{"left":"Xeroderma Pigmentosum (XP)","right":"Severe sunburn\nfreckling\nphotosensitivity\nearly‑onset skin cancers\nkeratitis"},{"left":"Lynch Syndrome (HNPCC)","right":"Early‑onset colorectal carcinoma (often right‑sided)\nendometrial cancer; no polyps"},{"left":"Fanconi Anemia","right":"Bone‑marrow failure (pancytopenia)\nshort stature\ncafé‑au‑lait spots\nthumb/radial anomalies\ndevelopmental delay"},{"left":"Huntington’s Disease","right":"Chorea\npsychiatric changes (depression\nirritability)\ncognitive decline\nweight loss"},{"left":"Amyotrophic Lateral Sclerosis (ALS)","right":"Progressive muscle weakness\nfasciculations\nspasticity\ndysphagia; sensory normal"},{"left":"Myotonic Dystrophy","right":"Myotonia (delayed muscle relaxation)\nprogressive muscle weakness\ncataracts\ncardiac arrhythmias"},{"left":"Spinocerebellar Ataxia","right":"Progressive cerebellar ataxia\ndysarthria\neye movement abnormalities\noften neuropathy"},{"left":"Fragile X Syndrome","right":"Intellectual disability\nelongated face\nlarge ears\nmacroorchidism\nhyperactive behavior"},{"left":"Down Syndrome","right":"Intellectual disability\nflat facial profile\nepicanthal folds\nsingle palmar crease\nhypotonia\ncongenital heart disease"},{"left":"Edwards Syndrome","right":"Severe intellectual disability\nrocker‑bottom feet\nclenched fists with overlapping fingers\nmicrognathia\ncongenital heart disease"},{"left":"Patau Syndrome","right":"Cleft lip/palate\npolydactyly\nsevere intellectual disability\nmicrophthalmia\nholoprosencephaly\ncongenital heart disease"},{"left":"Turner Syndrome","right":"Short stature\nwebbed neck\nshield chest\nlymphedema at birth\nstreak ovaries → primary amenorrhea & infertility"},{"left":"Klinefelter Syndrome","right":"Tall stature\nsmall firm testes\ngynecomastia\nreduced facial/body hair\ninfertility"},{"left":"CATCH‑22 Syndrome (DiGeorge)","right":"Cleft palate\ncardiac defects (conotruncal anomalies)\nabnormal facies\nthymic aplasia → recurrent infections\nhypocalcemia (parathyroid aplasia)"},{"left":"Williams Syndrome","right":"“Elfin” facies\nextreme friendliness\nwell‑developed verbal skills\nintellectual disability\nsupravalvular aortic stenosis\nhypercalcemia\ngrowth retardation"},{"left":"Neurofibromatosis Type 1","right":"Multiple neurofibromas\ncafé‑au‑lait spots (> 6)\nLisch nodules (iris hamartomas)\naxillary freckling"},{"left":"Prader–Willi Syndrome","right":"Neonatal hypotonia\nfailure to thrive initially → hyperphagia leading to obesity\nshort stature\nintellectual disability\nsmall hands/feet\nhypogonadism"},{"left":"Angelman Syndrome","right":"Severe intellectual disability\nseizures\nataxic gait\ninappropriate laughter (“happy puppet”)\nmicrocephaly"},{"left":"CPS1 Deficiency","right":"Hyperammonemia in neonates: lethargy\nvomiting\nseizures\npoor feeding"},{"left":"OTCase Deficiency","right":"Hyperammonemia\nvomiting\npoor feeding\nlethargy\nseizures; often male infants"},{"left":"Citrullinemia (ASS deficiency)","right":"Hyperammonemia\nvomiting\nfailure to thrive; later episodes triggered by illness"},{"left":"Argininosuccinic Aciduria","right":"Hyperammonemia\nvomiting\nhepatomegaly\nbrittle hair (trichorrhexis nodosa)"},{"left":"Arginase Deficiency","right":"Progressive spasticity\ndevelopmental delay\nseizures; mild hyperammonemia"},{"left":"Sickle Cell Disease","right":"Painful vaso‑occlusive crises\nanemia\njaundice\ndactylitis\nsusceptibility to infections"},{"left":"Cystic Fibrosis","right":"Chronic cough\nrecurrent pulmonary infections (Pseudomonas)\npancreatic insufficiency → steatorrhea\nmalabsorption\ninfertility in males; failure to thrive"},{"left":"Androgen Insensitivity Syndrome (CAIS)","right":"46,XY individuals with female external genitalia\nabsent/short vagina\nscant pubic/axillary hair; primary amenorrhea"},{"left":"Maturity‑Onset Diabetes of the Young (MODY)","right":"Mild hyperglycemia in adolescence/early adulthood; often no obesity; strong family history"},{"left":"Thalassemia (α and β)","right":"Microcytic anemia\nfatigue\nsplenomegaly; severe forms: skeletal deformities\ntransfusion dependency"},{"left":"Glycosylphosphatidylinositol (GPI) Deficiency","right":"Episodic hemoglobinuria (dark urine at night)\nfatigue\nabdominal pain; thrombosis"},{"left":"Alzheimer’s Disease","right":"Progressive memory loss\ndisorientation\nbehavioral changes\nimpaired executive function"},{"left":"Progeria (Hutchinson–Gilford)","right":"Growth failure\nalopecia\nbird‑like facies\nscleroderma‑like skin\nearly cardiovascular disease"},{"left":"Systemic Lupus Erythematosus (SLE)","right":"Malar “butterfly” rash\nphotosensitivity\narthritis\nserositis\nrenal disease\nhematologic abnormalities"},{"left":"Marfan Syndrome","right":"Tall stature with long limbs\npectus deformity\nscoliosis\nhypermobile joints\nlens subluxation (upward)\naortic root dilation → aneurysm/dissection"}];
-  const DATASET_ID = "4f73b101c9a4";
-
-  // Helpers
-  const $ = (sel, el=document) => el.querySelector(sel);
-  const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
-  const byId = (id) => document.getElementById(id);
-  const pad = (n) => String(n).padStart(2,'0');
-  const fmt = (ms) => { const s = Math.floor(ms/1000); return pad(Math.floor(s/60))+':'+pad(s%60); };
-  function shuffle(a) { for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-
-  // State
-  let started=false, startTs=null, timerInt=null;
-  let selectedLeft=null, selectedRight=null;
-  let matches=0, tries=0, total=PAIRS.length;
-
-  // Elements
-  const timerEl = byId('timer');
-  const bestEl = byId('best');
-  const scoreEl = byId('score');
-  const totalEl = byId('total');
-  const triesEl = byId('tries');
-  const accEl = byId('acc');
-
-  // Desktop mirror stats
-  const timerEl2 = byId('timer2'), bestEl2 = byId('best2'), scoreEl2 = byId('score2'), totalEl2 = byId('total2'), triesEl2 = byId('tries2'), accEl2 = byId('acc2'), accbar2 = byId('accbar2');
-  function mirrorStats() {
-    if (timerEl2) timerEl2.textContent = timerEl.textContent;
-    if (bestEl2) bestEl2.textContent = bestEl.textContent;
-    if (scoreEl2) scoreEl2.textContent = scoreEl.textContent;
-    if (totalEl2) totalEl2.textContent = totalEl.textContent;
-    if (triesEl2) triesEl2.textContent = triesEl.textContent;
-    if (accEl2) accEl2.textContent = accEl.textContent;
-  }
-
-  function loadBest() {
-    const key = 'bestTime_' + DATASET_ID;
-    const v = localStorage.getItem(key);
-    [bestEl, bestEl2].forEach(e => e && (e.textContent = v ? fmt(Number(v)) : '—'));
-  }
-  function saveBest(ms) {
-    const key = 'bestTime_' + DATASET_ID;
-    const v = localStorage.getItem(key);
-    if (!v || ms < Number(v)) localStorage.setItem(key, String(ms));
-  }
-
-  function resetStats() {
-    matches=0; tries=0;
-    [scoreEl, scoreEl2].forEach(e => e && (e.textContent = matches));
-    [triesEl, triesEl2].forEach(e => e && (e.textContent = tries));
-    [accEl, accEl2].forEach(e => e && (e.textContent = '0%'));
-    if (accbar2) accbar2.style.width = '0%';
-    [totalEl, totalEl2].forEach(e => e && (e.textContent = total));
-    byId('leftLeft').textContent = '';
-    byId('rightLeft').textContent = '';
-  }
-
-  function tick() { const now=Date.now(); timerEl.textContent = fmt(now - startTs); mirrorStats(); }
-  function startTimer() { clearInterval(timerInt); startTs=Date.now(); timerInt=setInterval(tick, 250); tick(); }
-  function stopTimer() { clearInterval(timerInt); }
-
-  function render() {
-    const left = shuffle(PAIRS.map(p => p.left.slice()));
-    const right = shuffle(PAIRS.map(p => p.right.slice()));
-    const leftEl = byId('left'), rightEl = byId('right');
-    leftEl.innerHTML=''; rightEl.innerHTML='';
-    left.forEach(txt => leftEl.appendChild(makeCard('L', txt)));
-    right.forEach(txt => rightEl.appendChild(makeCard('R', txt)));
-    byId('leftLeft').textContent = left.length + ' cards';
-    byId('rightLeft').textContent = right.length + ' cards';
-    resetStats();
-    started=false; timerEl.textContent='00:00'; mirrorStats();
-  }
-
-  function makeCard(side, txt) {
-    const btn = document.createElement('button');
-    btn.className = 'card';
-    btn.textContent = txt;
-    btn.setAttribute('data-side', side);
-    btn.setAttribute('data-value', txt);
-    btn.addEventListener('click', () => onSelect(btn));
-    return btn;
-  }
-
-  function isMobile() { return window.matchMedia('(max-width: 900px)').matches; }
-  function scrollToSide(side) {
-    const target = side==='L' ? byId('left') : byId('right');
-    if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
-  }
-
-  function onSelect(btn) {
-    if (btn.classList.contains('matched')) return;
-    if (!started) { started=true; startTimer(); }
-    const side = btn.getAttribute('data-side');
-    const wasSelected = btn.classList.contains('selected');
-    $$('.card.selected').forEach(b => b.classList.remove('selected'));
-    if (!wasSelected) btn.classList.add('selected');
-    if (side==='L') selectedLeft = wasSelected ? null : btn;
-    else selectedRight = wasSelected ? null : btn;
-    if (!wasSelected && isMobile()) { scrollToSide(side==='L' ? 'R' : 'L'); }
-    if (selectedLeft && selectedRight) checkMatch();
-  }
-
-  function updateAccuracy() {
-    const accuracy = tries ? Math.round((matches/tries)*100) : 0;
-    [accEl, accEl2].forEach(e => e && (e.textContent = accuracy + '%'));
-    if (accbar2) accbar2.style.width = Math.min(100, accuracy) + '%';
-  }
-
-  function checkMatch() {
-    const leftVal = selectedLeft.getAttribute('data-value');
-    const rightVal = selectedRight.getAttribute('data-value');
-    const ok = PAIRS.some(p => p.left === leftVal && p.right === rightVal);
-    tries++; [triesEl, triesEl2].forEach(e => e && (e.textContent = tries));
-    updateAccuracy();
-    if (ok) {
-      matches++; [scoreEl, scoreEl2].forEach(e => e && (e.textContent = matches));
-      [selectedLeft, selectedRight].forEach(b => { b.classList.add('matched'); b.classList.remove('selected'); b.disabled=true; });
-      selectedLeft = selectedRight = null;
-      if (matches===total) {
-        const elapsed = Date.now() - startTs;
-        stopTimer(); saveBest(elapsed); loadBest();
-        setTimeout(() => alert('Round complete in ' + fmt(elapsed) + '. Attempts: ' + tries), 20);
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const shuffle = (arr) => {
+      const a = arr.slice();
+      for (let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]] = [a[j],a[i]];
       }
-    } else {
-      [selectedLeft, selectedRight].forEach(b => {
-        b.classList.add('badflash');
-        setTimeout(() => b.classList.remove('badflash'), 420);
-      });
-      setTimeout(() => {
-        selectedLeft.classList.remove('selected');
-        selectedRight.classList.remove('selected');
-        selectedLeft = selectedRight = null;
-      }, 350);
-    }
-  }
+      return a;
+    };
 
-  function revealPairs() {
-    const map = new Map(PAIRS.map(p => [p.left, p.right]));
-    $$('#left .card').forEach(l => {
-      const rtext = map.get(l.getAttribute('data-value'));
-      if (!rtext) return;
-      const r = $$('#right .card').find(x => x.getAttribute('data-value') === rtext);
-      if (r) {
-        l.classList.add('selected'); r.classList.add('selected');
-        setTimeout(() => { l.classList.remove('selected'); r.classList.remove('selected'); }, 700);
+    let diseaseOrder = [];
+    let symptomOrder = [];
+    let selectedDisease = null;
+    let selectedSymptom = null;
+    let score = 0;
+    let attempts = 0;
+
+    const pairMap = new Map(PAIRS.map(([d,s]) => [d, s]));
+
+    function render(){
+      const dList = $('#diseaseList');
+      const sList = $('#symptomList');
+      dList.innerHTML = '';
+      sList.innerHTML = '';
+
+      diseaseOrder.forEach((idx) => {
+        const [disease] = PAIRS[idx];
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'card';
+        card.dataset.idx = idx;
+        card.dataset.role = 'disease';
+        card.setAttribute('aria-pressed', 'false');
+        card.innerHTML = `<strong>${disease}</strong>`;
+        dList.appendChild(card);
+      });
+
+      symptomOrder.forEach((idx) => {
+        const [, symptom] = PAIRS[idx];
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'card';
+        card.dataset.idx = idx;
+        card.dataset.role = 'symptom';
+        card.setAttribute('aria-pressed', 'false');
+        card.innerHTML = `<span>${symptom}</span>`;
+        sList.appendChild(card);
+      });
+
+      $$('.card').forEach(card => card.addEventListener('click', onCardClick));
+      updateHUD();
+      $('#status').textContent = 'Select a disease, then its matching symptoms.';
+    }
+
+    function onCardClick(e){
+      const el = e.currentTarget;
+      if (el.classList.contains('disabled') || el.classList.contains('correct')) return;
+
+      const role = el.dataset.role;
+      const idx = Number(el.dataset.idx);
+
+      if (role === 'disease'){
+        $$('#diseaseList .card.selected').forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-pressed','false'); });
+        el.classList.add('selected'); el.setAttribute('aria-pressed','true');
+        selectedDisease = idx;
+      } else {
+        $$('#symptomList .card.selected').forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-pressed','false'); });
+        el.classList.add('selected'); el.setAttribute('aria-pressed','true');
+        selectedSymptom = idx;
+      }
+
+      if (selectedDisease !== null && selectedSymptom !== null){
+        checkMatch(selectedDisease, selectedSymptom);
+      }
+    }
+
+    function checkMatch(dIdx, sIdx){
+      attempts++;
+      const [disease] = PAIRS[dIdx];
+      const [, symptom] = PAIRS[sIdx];
+      const isMatch = pairMap.get(disease) === symptom;
+
+      const dEl = document.querySelector(`#diseaseList .card[data-idx="${dIdx}"]`);
+      const sEl = document.querySelector(`#symptomList .card[data-idx="${sIdx}"]`);
+
+      if (isMatch){
+        score++;
+        dEl.classList.add('correct','disabled'); sEl.classList.add('correct','disabled');
+        dEl.classList.remove('selected'); sEl.classList.remove('selected');
+        toast('Correct');
+        selectedDisease = null; selectedSymptom = null;
+        updateHUD();
+        checkWin();
+      } else {
+        dEl.classList.add('wrong'); sEl.classList.add('wrong');
+        setTimeout(()=>{
+          dEl.classList.remove('wrong','selected'); dEl.setAttribute('aria-pressed','false');
+          sEl.classList.remove('wrong','selected'); sEl.setAttribute('aria-pressed','false');
+        }, 2000);
+        selectedDisease = null; selectedSymptom = null;
+        updateHUD();
+      }
+    }
+
+    function updateHUD(){
+      document.querySelector('#score').textContent = String(score);
+      document.querySelector('#total').textContent = String(PAIRS.length);
+      document.querySelector('#attempts').textContent = String(attempts);
+    }
+
+    function checkWin(){
+      if (score === PAIRS.length){
+        document.querySelector('#status').textContent = 'All matched. You win.';
+        toast('All matched. Well done.');
+      }
+    }
+
+    function toast(msg){
+      const t = document.querySelector('#toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      t.style.opacity = '0';
+      t.animate([{opacity:0, transform:'translate(-50%, -6px)'},{opacity:1, transform:'translate(-50%, 0)'}],{duration:160, fill:'forwards'});
+      setTimeout(()=>{
+        t.animate([{opacity:1},{opacity:0}],{duration:200, fill:'forwards'}).onfinish = () => { t.style.display='none'; };
+      }, 1200);
+    }
+
+    function resetGame(){
+      diseaseOrder = shuffle(PAIRS.map((_,i)=>i));
+      symptomOrder = shuffle(PAIRS.map((_,i)=>i));
+      score = 0; attempts = 0;
+      selectedDisease = null; selectedSymptom = null;
+      render();
+    }
+
+    document.addEventListener('keydown', (e)=>{
+      const active = document.activeElement;
+      if (!active || !active.classList || !active.classList.contains('card')) return;
+      if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        active.click();
       }
     });
-  }
 
-  function init() {
-    // Show desktop sidebar only on wide screens
-    if (window.matchMedia('(min-width: 900px)').matches) {
-      const ds = byId('desktopStats'); if (ds) ds.style.display = 'block';
-    }
-    loadBest(); render();
-    // Bind controls
-    const bind = (id, fn) => { const el = byId(id); if (el) el.addEventListener('click', fn); };
-    bind('start', render); bind('shuffle', render); bind('reveal', revealPairs);
-    bind('start_m', render); bind('shuffle_m', render); bind('reveal_m', revealPairs);
-  }
-  init();
-</script>
+    document.getElementById('resetBtn').addEventListener('click', resetGame);
+
+    resetGame();
+  </script>
 </body>
 </html>
