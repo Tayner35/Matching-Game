@@ -1,0 +1,327 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Disease ↔ Symptoms Matching — Set 2</title>
+  <style>
+    :root{
+      --bg: #0b0f14;
+      --card: rgba(255,255,255,0.06);
+      --muted: #9fb0c3;
+      --primary: #5bd0ff;
+      --accent: #8b5cff;
+      --good: #1fce7a;
+      --bad: #ff4d4d;
+      --outline: rgba(255,255,255,0.14);
+      --text: #ffffff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1000px 700px at 15% 10%, rgba(139,92,255,.25), transparent 60%),
+                  radial-gradient(900px 600px at 85% 90%, rgba(91,208,255,.18), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .app{ width:min(1100px, 100%); }
+    header{ display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .title{
+      font-weight:700; letter-spacing:.3px; font-size: clamp(22px, 3vw, 30px);
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .toolbar{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .pill{
+      border:1px solid var(--outline);
+      padding:8px 12px; border-radius:999px; color:var(--muted); font-size:14px;
+      display:flex; gap:10px; align-items:center; backdrop-filter:saturate(140%) blur(6px);
+      background:var(--card);
+    }
+    button{
+      border:none; border-radius:12px; padding:10px 14px; font-weight:600; color:#0b0f14;
+      background:linear-gradient(90deg, var(--primary), var(--accent));
+      cursor:pointer; transition: transform .06s ease, box-shadow .2s ease; box-shadow:0 6px 24px rgba(0,0,0,.25);
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+    .board{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+    .col{
+      border:1px solid var(--outline);
+      background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+      border-radius:20px; padding:14px; backdrop-filter: blur(6px) saturate(140%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02), 0 12px 40px rgba(0,0,0,0.2);
+      min-height: 70vh;
+      display:flex; flex-direction:column;
+    }
+    .col h2{
+      margin:6px 8px 10px; font-size:15px; font-weight:700; color:var(--muted); letter-spacing:.2px;
+      text-transform:uppercase;
+    }
+    .list{ display:grid; gap:10px; align-content:start; }
+    .card{
+      border:1px solid var(--outline);
+      background:var(--card);
+      color:#ffffff;
+      padding:12px 14px; border-radius:14px;
+      transition: border-color .2s ease, box-shadow .2s ease, transform .06s ease;
+      cursor:pointer; position:relative; text-align:left;
+    }
+    .card:hover{ box-shadow:0 8px 24px rgba(0,0,0,.25); }
+    .card:active{ transform: translateY(1px) scale(.995); }
+    .card.disabled{ opacity:.5; pointer-events:none; }
+    .card.selected{ outline:2px solid var(--accent); border-color:rgba(139,92,255,.8); box-shadow:0 10px 28px rgba(139,92,255,.25); }
+    .card.correct{ background: linear-gradient(180deg, rgba(31,206,122,.15), rgba(31,206,122,.08)); border-color: rgba(31,206,122,.7); }
+    .card.correct::after{
+      content:"✓";
+      position:absolute; right:10px; top:8px; font-weight:900; color:var(--good);
+    }
+    .card.wrong{ outline:2px solid var(--bad); border-color: rgba(255,77,77,.9); }
+    .small{ font-size:12px; color:var(--muted); margin-left:6px; }
+    .footer{ display:flex; justify-content:center; margin-top:14px; color:var(--muted); font-size:14px; }
+    .toast{
+      position:fixed; top:14px; left:50%; transform:translateX(-50%);
+      background:rgba(17,25,40,.85); border:1px solid var(--outline); padding:10px 14px; border-radius:12px;
+      color:var(--text); font-weight:600; display:none;
+    }
+    @media (max-width: 900px){
+      .board{ grid-template-columns: 1fr; }
+      .col{ min-height:auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">Disease ↔ Symptoms Matching — Set 2</div>
+      <div class="toolbar">
+        <div class="pill" id="scorePill">Score: <span id="score">0</span> / <span id="total">0</span></div>
+        <div class="pill">Attempts: <span id="attempts">0</span></div>
+        <button id="resetBtn" aria-label="Reset game">Reset</button>
+      </div>
+    </header>
+
+    <section class="board" role="application" aria-label="Matching board">
+      <div class="col" aria-label="Diseases column">
+        <h2>Diseases <span class="small">(click one)</span></h2>
+        <div class="list" id="diseaseList"></div>
+      </div>
+      <div class="col" aria-label="Symptoms column">
+        <h2>Symptoms / Clinical Findings <span class="small">(click one)</span></h2>
+        <div class="list" id="symptomList"></div>
+      </div>
+    </section>
+
+    <div class="footer" id="status"></div>
+  </div>
+  <div class="toast" id="toast">Great job</div>
+
+  <script>
+    const PAIRS = [
+      ["Hartnup Disease","Photodermatitis, Ataxia, Diarrhea. Shares the 3 \"D\"s (Dementia, Dermatitis, Diarrhea) with pellagra. Indiconuria (bluish colored urine). Low plasma/high urine levels of neutral amino acids, especially tryptophan."],
+      ["Cystinuria","Main clinical finding is cystine stones forming in the kidneys. Small stones can pass down the ureter and are painful. Urine has higher cystine levels. Serum cystine levels are typically low."],
+      ["Phenylketonuria (PKU)","Leads to permanent neurological damage if not detected and treated early. Problems caused by elevated phenylpyruvic acid buildup hurting brain development."],
+      ["Tyrosinemia Type 1","Acute infantile form: Liver failure, renal tubulopathy, sepsis, hypoglycemia. Chronic form: Hepatomegaly, cirrhosis, renal tubulopathy, growth deficits. Most severe form."],
+      ["Tyrosinemia Type 2","Painful corneal lesions with lacrimation, scars, photophobia. Mild cognitive deficits."],
+      ["Maple Syrup Urine Disease (MSUD)","Infants lack sucking reflex. Seizures. Coma and death if not treated. Maple smelling urine (late stage symptom). Elevated levels of branched chain amino acids (Valine, Isoleucine, Leucine)."],
+      ["Homocystinuria","Lens Dislocation (82% by 10 years old). Osteoporosis (64% by 15 years old). Cognitive deficits. Vascular events. Usually tall and thin compared to siblings. High Methionine/low Cystine levels."],
+      ["Isovaleric Acidemia","Vomiting, diarrhea, poor feeding. Lethargy, hypotonia, seizures. Sweaty feet odor of urine. Elevated levels of isovaleric acid, hydroxyisovalerate, or isovalerylglycine."],
+      ["Propionic Acidemia","Early severe illness, vomiting with metabolic acidosis. Hypoglycemia. Ketonuria. Elevated serum ammonia (hyperammonemia). Elevated propionic acid."],
+      ["Methylmalonic Acidemia","Early severe illness, vomiting with metabolic acidosis. Hypoglycemia. Ketonuria. Elevated serum ammonia (hyperammonemia). Elevated methylmalonic acid."],
+      ["Classical Ehlers-Danlos Syndrome","Hypermobility (unusually large range of joint movement). Loose joints prone to dislocation and chronic pain. Elastic (stretchy) and fragile skin. Weakened connective tissue."],
+      ["Vascular Ehlers-Danlos Syndrome","Bleeding issues caused by tearing of blood vessels. Thin, translucent, very fragile skin. Weakened connective tissue."],
+      ["Osteogenesis Imperfecta","Brittle bones. Loose joints, blue grey tints the sclera. Discolored teeth prone to decay, possible hearing loss. Symptoms range from mild to severe (including death after birth)."],
+      ["Recessive Dystrophic Epidermolysis Bullosa","Extreme skin fragility, extensive scarring, joint contractures/deformities, and growth retardation."],
+      ["Scurvy","Bruising and anemia. Fatigue. Peri follicular hemorrhages. Periodontal disease, poor wound healing. Muscle and/or bone pain. Corkscrew hair. Edema."],
+      ["Achondroplasia","Short stature. Average sized trunk, but short limbs. Enlarged head (macrocephaly) and prominent forehead. Bowed legs, front-to-back curvature of spine (kyphosis)."],
+      ["Hypochondroplasia","Similar features to achondroplasia. Less severe; patients are taller."],
+      ["Muenke Syndrome","Premature fusion of skull bones (craniosynostosis) along the coronal suture during dvelopment."],
+      ["Leigh Syndrome","Ataxia. Loss of milestones (developmental regression). Often fatal. Characteristic symmetrical brain lesions. Hypotonia, psychomotor delay, ophthalmoplegia."],
+      ["MELAS (Mitochondrial Encephalomyopathy, Lactic Acidosis, and Stroke-like Episodes)","Mitochondrial Encephalomyopathy, Lactic Acidosis, and Stroke-like Episodes. Lactic acidosis. Can have Ragged Red Fibers on muscle biopsy."],
+      ["MERRF (Myoclonus Epilepsy with Ragged Red Fibers)","Myoclonus Epilepsy, Ragged Red Fibers. Myoclonus (brief sudden muscle jerks). Epileptic seizures, ataxia. Ragged red fibers (clumps of diseased mitochondria in muscle)."],
+      ["Kearns-Sayre Syndrome","Ptosis (droopy eyelids). Chronic progressive external ophthalmoplegia (CPEO) (inability to move eyes)."],
+      ["Essential Fructosuria","Benign course; generally causes no problems. Elevated fructose in urine."],
+      ["Hereditary Fructose Intolerance","Acute symptoms after fructose consumption: Hypoglycemia, Vomiting, Poor Feeding. Prolonged intake: Liver and kidney problems/damage. Lactic Acidosis (+/- hyperuricemia). Hepatomegaly. Presents after introduction of fructose/sucrose (usually 6-12 months)."],
+      ["Classic Galactosemia","Acute symptoms: Hypoglycemia, Vomiting, Jaundice (hyperbilirubinemia), Poor Feeding. Cataracts, Hepatomegaly. Presents shortly after milk feeding begins."],
+      ["Primary Lactase Deficiency","Pain or cramps in lower GI tract, Bloating, Excessive Gas, Loose stools, Diarrhea after consuming milk/lactose foods."],
+      ["Secondary Lactase Deficiency","Pain or cramps in lower GI tract, Bloating, Excessive Gas, Loose stools, Diarrhea after consuming milk/lactose foods. Caused as a symptom of GI damage from other causes such as trauma or medication like chemotherapy."],
+      ["Congenital Lactase Deficiency","Pain or cramps in lower GI tract, Bloating, Excessive Gas, Loose stools, Diarrhea after consuming milk/lactose foods. Occurs in children less than 6 years old."],
+      ["Von Gierke’s Disease (GSD Type I)","Severe hypoglycemia with lactic acidosis during fasting. Hepatomegaly (distended abdomen). Failure to thrive/short stature. Seizures. Hyperlipidemia, hyperuricemia, enlarged kidneys. Appears around 3-4 months of age."],
+      ["Pompe’s Disease (GSD Type II)","Infantile form: Fatal by 1 year. Hypotonia, hyporeflexia, enlarged tongue, Cardiomegaly (enlarged heart). Juvenile/Adult forms: Myopathy. Glycogen accumulation in lysosomes."],
+      ["Cori’s Disease (GSD Type III)","Hepatic presentation: Mild hypoglycemia (with normal lactate). Hepatomegaly, failure to thrive. Myopathic presentation: Muscle weakness/hypotonia, motor neuron disease, cardiomyopathy (may appear later in life)."],
+      ["Andersen’s Disease (GSD Type IV)","Progressive Hepatic Form: Hepatomegaly, failure to thrive. Liver failure (cirrhosis), splenomegaly. Life expectancy 4-5 years. Hypoglycemia occurs late."],
+      ["McArdle’s Disease (GSD Type V)","Exercise intolerance (painful cramps, stiffness, relieved by rest). Second wind phenomenon. Dark colored urine (positive myoglobin) after exercise."],
+      ["Hers’ Disease (GSD Type VI)","Usually a benign course. Mild hypoglycemia. Mild hyperlipidemia, hepatomegaly, failure to thrive (normalizes later)."],
+      ["I-Cell Disease / Mucolipidosis II","Craniofacial abnormalities (coarse features). Skeletal malformations (scoliosis, kyphosis). Hepatomegaly, hernia. Delays in development. Inclusion bodies (cell debris accumulation) in cells. Often fatal (age 5-8 years)."],
+      ["Tay-Sachs Disease","Apparent 3-6 months of age. Destruction of nerve cells in brain/spinal cord. Loss of motor skills, seizures, cognitive deficits. \"Cherry Red Spot\" on retina. Death by age 4 or 5."],
+      ["Gaucher Disease","Most common LSD. Bruising and anemia. Fatigue. Hepatosplenomegaly. Skeletal dysplasia, bone pain, joint swelling."],
+      ["Niemann-Pick Disease","Progressive neurological illness. Vertical supranuclear gaze palsy (inability to look up/down). Dystonia, seizures, difficulty swallowing. Hepatosplenomegaly."],
+      ["Fabry Disease","Nephropathy with proteinuria. Cardiac issues. Angiokeratoma (red, non-painful rash). Cornea verticillate (cloudy cornea). Cerebrovascular disease (stroke, TIAs) in older patients."],
+      ["Primary Carnitine Deficiency","Onset 3-30 months. Encephalopathy, coma. Hypoketotic hypoglycemia. Hepatomegaly, hyperammonemia. Low serum carnitine."],
+      ["MCAD Deficiency","Typical onset 3-24 months. Hypoketotic hypoglycemia. Vomiting, lethargy, seizures, coma. Often triggered by a common illness/fasting. Elevated Octanoyl-Carnitine. Most common defect of FA oxidation."],
+      ["LCHAD Deficiency","Fatty acid deposition into organs. Skeletal myopathy, cardiomyopathy, peripheral neuropathy, cirrhosis. Reversal of milestones, heart failure. Hypoketotic hypoglycemia."],
+      ["VLCAD Deficiency","Fatty acid deposition into organs. Skeletal myopathy, cardiomyopathy, peripheral neuropathy, cirrhosis. Reversal of milestones, heart failure. Hypoketotic hypoglycemia."],
+      ["Adrenoleukodystrophy","Ataxia. Vision and hearing problems, dementia. Issues related to low cortisol (adrenal insufficiency). Hyperpigmentation. Elevated C26 fatty acid."],
+      ["Familial Hypercholesterolemia","Heart attacks (homozygous patients often before age 30). Xanthomas (waxy cholesterol deposits in skin/tendons). Xantholasma (cholesterol deposits in eyelids). Very high total cholesterol/LDL-C."],
+      ["Abetalipoproteinemia","Failure to thrive. Acanthocytes (star-shaped red blood cells). Steatorrhea (excess fat in foul-smelling stools). Neurological problems (ataxia, retinal degeneration). Deficiency in absorbing fat soluble vitamins (E, A, D, K). Lack of ApoB-containing lipoproteins in plasma."],
+      ["Hypobetalipoproteinemia","Failure to thrive. Intestinal lipid malabsorption. Hepatic Steatosis (fat deposition in liver due to liver TG elevation). Low ApoB-containing lipoproteins in plasma."],
+      ["Diabetic Ketoacidosis","Kussmaul Breathing. Nausea, Vomiting, Abdominal pain. Fruity/acetone breath. Fatigue, weight loss, polyuria, dehydration. Lab findings: High blood glucose (>250 mg/dL), Low blood pH (<7.3), Low serum bicarb, High Anion Gap, Ketones present."]
+    ];
+
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const shuffle = (arr) => {
+      const a = arr.slice();
+      for (let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]] = [a[j],a[i]];
+      }
+      return a;
+    };
+
+    let diseaseOrder = [];
+    let symptomOrder = [];
+    let selectedDisease = null;
+    let selectedSymptom = null;
+    let score = 0;
+    let attempts = 0;
+
+    const pairMap = new Map(PAIRS.map(([d,s]) => [d, s]));
+
+    function render(){
+      const dList = $('#diseaseList');
+      const sList = $('#symptomList');
+      dList.innerHTML = '';
+      sList.innerHTML = '';
+
+      diseaseOrder.forEach((idx) => {
+        const [disease] = PAIRS[idx];
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'card';
+        card.dataset.idx = idx;
+        card.dataset.role = 'disease';
+        card.setAttribute('aria-pressed', 'false');
+        card.innerHTML = `<strong>${disease}</strong>`;
+        dList.appendChild(card);
+      });
+
+      symptomOrder.forEach((idx) => {
+        const [, symptom] = PAIRS[idx];
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'card';
+        card.dataset.idx = idx;
+        card.dataset.role = 'symptom';
+        card.setAttribute('aria-pressed', 'false');
+        card.innerHTML = `<span>${symptom}</span>`;
+        sList.appendChild(card);
+      });
+
+      $$('.card').forEach(card => card.addEventListener('click', onCardClick));
+      updateHUD();
+      $('#status').textContent = 'Select a disease, then its matching symptoms.';
+    }
+
+    function onCardClick(e){
+      const el = e.currentTarget;
+      if (el.classList.contains('disabled') || el.classList.contains('correct')) return;
+
+      const role = el.dataset.role;
+      const idx = Number(el.dataset.idx);
+
+      if (role === 'disease'){
+        $$('#diseaseList .card.selected').forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-pressed','false'); });
+        el.classList.add('selected'); el.setAttribute('aria-pressed','true');
+        selectedDisease = idx;
+      } else {
+        $$('#symptomList .card.selected').forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-pressed','false'); });
+        el.classList.add('selected'); el.setAttribute('aria-pressed','true');
+        selectedSymptom = idx;
+      }
+
+      if (selectedDisease !== null && selectedSymptom !== null){
+        checkMatch(selectedDisease, selectedSymptom);
+      }
+    }
+
+    function checkMatch(dIdx, sIdx){
+      attempts++;
+      const [disease] = PAIRS[dIdx];
+      const [, symptom] = PAIRS[sIdx];
+      const isMatch = pairMap.get(disease) === symptom;
+
+      const dEl = document.querySelector(`#diseaseList .card[data-idx="${dIdx}"]`);
+      const sEl = document.querySelector(`#symptomList .card[data-idx="${sIdx}"]`);
+
+      if (isMatch){
+        score++;
+        dEl.classList.add('correct','disabled'); sEl.classList.add('correct','disabled');
+        dEl.classList.remove('selected'); sEl.classList.remove('selected');
+        toast('Correct');
+        selectedDisease = null; selectedSymptom = null;
+        updateHUD();
+        checkWin();
+      } else {
+        dEl.classList.add('wrong'); sEl.classList.add('wrong');
+        setTimeout(()=>{
+          dEl.classList.remove('wrong','selected'); dEl.setAttribute('aria-pressed','false');
+          sEl.classList.remove('wrong','selected'); sEl.setAttribute('aria-pressed','false');
+        }, 2000);
+        selectedDisease = null; selectedSymptom = null;
+        updateHUD();
+      }
+    }
+
+    function updateHUD(){
+      document.querySelector('#score').textContent = String(score);
+      document.querySelector('#total').textContent = String(PAIRS.length);
+      document.querySelector('#attempts').textContent = String(attempts);
+    }
+
+    function checkWin(){
+      if (score === PAIRS.length){
+        document.querySelector('#status').textContent = 'All matched. You win.';
+        toast('All matched. Well done.');
+      }
+    }
+
+    function toast(msg){
+      const t = document.querySelector('#toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      t.style.opacity = '0';
+      t.animate([{opacity:0, transform:'translate(-50%, -6px)'},{opacity:1, transform:'translate(-50%, 0)'}],{duration:160, fill:'forwards'});
+      setTimeout(()=>{
+        t.animate([{opacity:1},{opacity:0}],{duration:200, fill:'forwards'}).onfinish = () => { t.style.display='none'; };
+      }, 1200);
+    }
+
+    function resetGame(){
+      diseaseOrder = shuffle(PAIRS.map((_,i)=>i));
+      symptomOrder = shuffle(PAIRS.map((_,i)=>i));
+      score = 0; attempts = 0;
+      selectedDisease = null; selectedSymptom = null;
+      render();
+    }
+
+    document.addEventListener('keydown', (e)=>{
+      const active = document.activeElement;
+      if (!active || !active.classList || !active.classList.contains('card')) return;
+      if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        active.click();
+      }
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', resetGame);
+
+    resetGame();
+  </script>
+</body>
+</html>
